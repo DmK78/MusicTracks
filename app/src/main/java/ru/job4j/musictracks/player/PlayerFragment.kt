@@ -3,39 +3,40 @@ package ru.job4j.musictracks.player
 
 import android.R
 import android.content.Context
-import android.media.MediaPlayer
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.SeekBar
-import android.widget.SeekBar.OnSeekBarChangeListener
 import android.widget.TextView
 import androidx.core.content.ContextCompat
 import androidx.core.os.bundleOf
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.Observer
+import androidx.lifecycle.ViewModelProvider
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.squareup.picasso.Picasso
 import kotlinx.android.synthetic.main.fragment_player.*
-import kotlinx.android.synthetic.main.item_track.view.*
 import ru.job4j.musictracks.tracks.TracksFragment
 
 
 class PlayerFragment : Fragment(), Runnable {
 
-    var mediaPlayer: MediaPlayer? = MediaPlayer()
+    //var mediaPlayer: MediaPlayer? = MediaPlayer()
     var mSeekBar: SeekBar? = null
-    var wasPlaying = false
+    //var wasPlaying = false
     var fab: FloatingActionButton? = null
+    private lateinit var viewModel: PlayerViewModel
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-//viewModel = ViewModelProvider(this)[PlayerViewModel::class.java]
+        viewModel = ViewModelProvider(this)[PlayerViewModel::class.java]
+
         val trackName = arguments!!.getString(TracksFragment.TRACK_NAME)
         val trackUrl = arguments!!.getString(TracksFragment.TRACK_URL)
         val trackImg = arguments!!.getString(TracksFragment.TRACK_IMG)
         val artistName = arguments!!.getString(TracksFragment.ARTIST_NAME)
-
+         viewModel.initPlayer(trackUrl!!)
         trackImg?.let {
 
             val context: Context = playerIvAlbumImg.context
@@ -45,14 +46,40 @@ class PlayerFragment : Fragment(), Runnable {
         playerTvArtistName.text = artistName
         playerTvTracktName.text = trackName
 
-
+      /*  viewModel.getIsPlayingLiveData().observe(viewLifecycleOwner, Observer {
+            if(it==true){
+                viewModel.play()
+                fab!!.setImageDrawable(
+                    ContextCompat.getDrawable(
+                        context!!,
+                        R.drawable.ic_media_pause
+                    )
+                )
+            } else
+            {
+                viewModel.stop()
+                fab!!.setImageDrawable(
+                    ContextCompat.getDrawable(
+                        context!!,
+                        R.drawable.ic_media_play
+                    )
+                )
+            }
+        })*/
 
         fab = button as FloatingActionButton?
-        fab!!.setOnClickListener { playSong(trackUrl!!) }
+        fab!!.setOnClickListener {
+            if (viewModel.mediaPlayer!!.isPlaying){
+                viewModel.stop()
+            } else{
+                viewModel.play()
+            }
+        }
+
 
         val seekBarHint: TextView = textView
 
-        mSeekBar = seekbar
+        /*mSeekBar = seekbar
 
         mSeekBar!!.setOnSeekBarChangeListener(object : OnSeekBarChangeListener {
             override fun onStartTrackingTouch(seekBar: SeekBar) {
@@ -74,7 +101,7 @@ class PlayerFragment : Fragment(), Runnable {
                 val labelWidth = seekBarHint.width
                 seekBarHint.x = (offset + seekBar.x + `val` - Math.round(percent * offset)
                         - Math.round(percent * labelWidth / 2))
-                if (progress > 0 && mediaPlayer != null && !mediaPlayer!!.isPlaying) {
+                if (progress > 0 && viewModel.mediaPlayer != null && !viewModel.mediaPlayer!!.isPlaying) {
                     clearMediaPlayer()
                     fab!!.setImageDrawable(
                         ContextCompat.getDrawable(
@@ -87,11 +114,11 @@ class PlayerFragment : Fragment(), Runnable {
             }
 
             override fun onStopTrackingTouch(seekBar: SeekBar) {
-                if (mediaPlayer != null && mediaPlayer!!.isPlaying) {
-                    mediaPlayer!!.seekTo(seekBar.progress)
+                if (viewModel.mediaPlayer != null && viewModel.mediaPlayer!!.isPlaying) {
+                    viewModel.mediaPlayer!!.seekTo(seekBar.progress)
                 }
             }
-        })
+        })*/
 
 
     }
@@ -105,11 +132,11 @@ class PlayerFragment : Fragment(), Runnable {
     }
 
     fun playSong(trackUrl: String) {
-        try {
-            if (mediaPlayer != null && mediaPlayer!!.isPlaying) {
-                clearMediaPlayer()
+        /*try {
+            if (viewModel.mediaPlayer != null && viewModel.mediaPlayer!!.isPlaying) {
+                viewModel.clearMediaPlayer()
                 mSeekBar!!.progress = 0
-                wasPlaying = true
+                viewModel.wasPlaying = true
                 fab!!.setImageDrawable(
                     ContextCompat.getDrawable(
                         context!!,
@@ -117,9 +144,9 @@ class PlayerFragment : Fragment(), Runnable {
                     )
                 )
             }
-            if (!wasPlaying) {
-                if (mediaPlayer == null) {
-                    mediaPlayer = MediaPlayer()
+            if (!viewModel.wasPlaying) {
+                if (viewModel.mediaPlayer == null) {
+                    viewModel.mediaPlayer = MediaPlayer()
                 }
                 fab!!.setImageDrawable(
                     ContextCompat.getDrawable(
@@ -128,21 +155,21 @@ class PlayerFragment : Fragment(), Runnable {
                     )
                 )
 
-                mediaPlayer!!.setDataSource(trackUrl)
+                viewModel.mediaPlayer!!.setDataSource(trackUrl)
 
 
-                mediaPlayer!!.prepare()
-                mediaPlayer!!.setVolume(0.5f, 0.5f)
-                mediaPlayer!!.isLooping = false
-                mSeekBar!!.max = mediaPlayer!!.duration
+                viewModel.mediaPlayer!!.prepare()
+                viewModel.mediaPlayer!!.setVolume(0.5f, 0.5f)
+                viewModel.mediaPlayer!!.isLooping = false
+                mSeekBar!!.max = viewModel.mediaPlayer!!.duration
 
-                mediaPlayer!!.start()
+                viewModel.mediaPlayer!!.start()
                 Thread(this).start()
             }
-            wasPlaying = false
+            viewModel.wasPlaying = false
         } catch (e: Exception) {
             e.printStackTrace()
-        }
+        }*/
     }
 
 
@@ -162,14 +189,14 @@ class PlayerFragment : Fragment(), Runnable {
     }
 
     override fun run() {
-        var currentPosition = mediaPlayer?.currentPosition
-        val total = mediaPlayer?.duration
+        var currentPosition = viewModel.mediaPlayer?.currentPosition
+        val total = viewModel.mediaPlayer?.duration
 
 
-        while (mediaPlayer != null && mediaPlayer!!.isPlaying && currentPosition!! < total!!) {
+        while (viewModel.mediaPlayer != null && viewModel.mediaPlayer!!.isPlaying && currentPosition!! < total!!) {
             currentPosition = try {
                 Thread.sleep(1000)
-                mediaPlayer!!.currentPosition
+                viewModel.mediaPlayer!!.currentPosition
             } catch (e: InterruptedException) {
                 return
             } catch (e: java.lang.Exception) {
@@ -187,19 +214,19 @@ class PlayerFragment : Fragment(), Runnable {
     }
 
     private fun clearMediaPlayer() {
-        if (mediaPlayer != null) {
+        if (viewModel.mediaPlayer != null) {
             try {
-                mediaPlayer!!.release()
-                mediaPlayer = null
+                viewModel.mediaPlayer!!.release()
+                //viewModel.mediaPlayer = null
             } catch (e: java.lang.Exception) {
                 e.printStackTrace()
             }
         }
 
 
-      /*  mediaPlayer.stop()
-        mediaPlayer.release()
-        mediaPlayer = null!!*/
+        /*  mediaPlayer.stop()
+          mediaPlayer.release()
+          mediaPlayer = null!!*/
     }
 
 }
