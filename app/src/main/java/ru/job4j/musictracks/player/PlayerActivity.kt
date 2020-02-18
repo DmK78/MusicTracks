@@ -7,6 +7,12 @@ import androidx.fragment.app.Fragment
 import ru.job4j.musictracks.BaseActivity
 import ru.job4j.musictracks.tracks.TracksFragment
 
+/**
+ * @author Dmitry Kolganov (mailto:dmk78@inbox.ru)
+ * @version $Id$
+ * @since 12.02.2020
+ */
+
 class PlayerActivity : BaseActivity() {
     override fun createFragment(): Fragment {
         return PlayerFragment.of(intent.getStringExtra(TracksFragment.TRACK_URL),
@@ -15,18 +21,6 @@ class PlayerActivity : BaseActivity() {
                     intent.getStringExtra(TracksFragment.ARTIST_NAME))
 
 
-    }
-
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        /*intent = Intent(applicationContext, AudioService::class.java)
-        startService(intent)*/
-    }
-
-    override fun onDestroy() {
-        super.onDestroy()
-        /*intent = Intent(applicationContext, AudioService::class.java)
-        stopService(intent)*/
     }
 
     companion object {

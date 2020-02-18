@@ -15,9 +15,16 @@ import androidx.recyclerview.widget.RecyclerView
 import ru.job4j.musictracks.R
 import ru.job4j.musictracks.player.PlayerActivity
 
+/**
+ * @author Dmitry Kolganov (mailto:dmk78@inbox.ru)
+ * @version $Id$
+ * @since 12.02.2020
+ */
+
 class TracksFragment : Fragment() {
     private lateinit var viewModel: TracksViewModel
     private lateinit var tracksAdapter: TracksAdapter
+
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
@@ -43,10 +50,6 @@ class TracksFragment : Fragment() {
             }
         })
         setupAdapter(view)
-
-
-
-
         return view
     }
 

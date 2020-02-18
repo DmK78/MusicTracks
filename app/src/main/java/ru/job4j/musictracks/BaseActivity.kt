@@ -7,7 +7,7 @@ import androidx.fragment.app.Fragment
 /**
  * @author Dmitry Kolganov (mailto:dmk78@inbox.ru)
  * @version $Id$
- * @since 01.12.2019
+ * @since 12.02.2020
  */
 abstract class BaseActivity : AppCompatActivity() {
     protected abstract fun createFragment(): Fragment

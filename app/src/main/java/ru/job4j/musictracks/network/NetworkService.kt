@@ -14,7 +14,7 @@ import ru.job4j.musictracks.models.GetTracksResponse
 /**
  * @author Dmitry Kolganov (mailto:dmk78@inbox.ru)
  * @version $Id$
- * @since 05.02.2020
+ * @since 12.02.2020
  */
 class NetworkService {
     private val mRetrofit: Retrofit
@@ -46,25 +46,6 @@ class NetworkService {
                 override fun onError(e: Throwable) {}
             })
     }
-
-/*    fun getUser(
-        token: String,
-        user_id: Int,
-        v: String,
-        params: Map<String, String>,
-        callback: MutableLiveData<GetUser>
-    ) {
-        jSONApi.getUser(token, user_id, v, params)
-            .subscribeOn(Schedulers.io())
-            .observeOn(AndroidSchedulers.mainThread())
-            .subscribe(object : DisposableSingleObserver<GetUser?>() {
-                override fun onSuccess(response: GetUser) {
-                    callback.postValue(response)
-                }
-
-                override fun onError(e: Throwable) {}
-            })
-    }*/
 
     private val jSONApi: JSonHolderApi
         get() = mRetrofit.create(JSonHolderApi::class.java)

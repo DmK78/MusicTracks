@@ -13,40 +13,37 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.SeekBar
-import android.widget.TextView
 import androidx.core.content.ContextCompat
 import androidx.core.os.bundleOf
 import androidx.fragment.app.Fragment
-import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.Observer
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.squareup.picasso.Picasso
 import kotlinx.android.synthetic.main.fragment_player.*
 import ru.job4j.musictracks.R
 import ru.job4j.musictracks.tracks.TracksFragment
 
+/**
+ * @author Dmitry Kolganov (mailto:dmk78@inbox.ru)
+ * @version $Id$
+ * @since 12.02.2020
+ */
 
-class PlayerFragment : Fragment(), Runnable {
-    //private lateinit var viewModel: PlayerViewModel
-    var mSeekBar: SeekBar? = null
-    var fab: FloatingActionButton? = null
-    var bound = false
-    val LOG_TAG = "myLogs"
-
-    var sConn: ServiceConnection? = null
-    var intent: Intent? = null
-    var audioService: AudioService? = null
-
-
+class PlayerFragment : Fragment() {
+    private var mSeekBar: SeekBar? = null
+    private var fab: FloatingActionButton? = null
+    private var bound = false
+    private val LOG_TAG = "myLogs"
+    private var sConn: ServiceConnection? = null
+    private var intent: Intent? = null
+    private var audioService: AudioService? = null
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        //  viewModel = ViewModelProvider(this)[PlayerViewModel::class.java]
         val trackName = arguments!!.getString(TracksFragment.TRACK_NAME)
         val trackUrl = arguments!!.getString(TracksFragment.TRACK_URL)
         val trackImg = arguments!!.getString(TracksFragment.TRACK_IMG)
         val artistName = arguments!!.getString(TracksFragment.ARTIST_NAME)
-//viewModel.initPlayer(trackUrl!!)
-
         intent = Intent(context, AudioService::class.java)
         intent!!.putExtra("trackUrl", trackUrl)
         sConn = object : ServiceConnection {
@@ -54,7 +51,21 @@ class PlayerFragment : Fragment(), Runnable {
                 Log.d(LOG_TAG, "MainActivity onServiceConnected")
                 audioService = (binder as AudioService.MyBinder).service
                 bound = true
-                seekbar.max = audioService!!.getDuration()/1000
+                audioService!!.getProgressLiveData().observe(viewLifecycleOwner, Observer {
+                    seekbar.progress = it
+                    if (mSeekBar?.progress != audioService?.getDuration()) {
+                        mSeekBar?.max = audioService!!.getDuration()
+                    }
+                    if (audioService!!.isPlaybackShouldContinuePlaying) {
+                        audioService!!.play()
+                        fab!!.setImageDrawable(
+                            ContextCompat.getDrawable(
+                                context!!,
+                                R.drawable.pause_button
+                            )
+                        )
+                    }
+                })
             }
 
             override fun onServiceDisconnected(name: ComponentName) {
@@ -69,45 +80,32 @@ class PlayerFragment : Fragment(), Runnable {
         }
         playerTvArtistName.text = artistName
         playerTvTracktName.text = trackName
-
         fab = button as FloatingActionButton?
-
-
-
         fab!!.setOnClickListener {
-            if (audioService!!.isPlaying()) {
-                audioService!!.pause()
-                fab!!.setImageDrawable(
-                    ContextCompat.getDrawable(
-                        context!!,
-                        R.drawable.exo_controls_play
+            audioService?.let {
+                if (!audioService!!.isPlaying()) {
+                    audioService!!.play()
+                    fab!!.setImageDrawable(
+                        ContextCompat.getDrawable(
+                            context!!,
+                            R.drawable.pause_button
+                        )
                     )
-                )
-            } else {
-                audioService!!.play()
-                Thread(this).start()
-
-                fab!!.setImageDrawable(
-                    ContextCompat.getDrawable(
-                        context!!,
-                        R.drawable.exo_controls_pause
+                } else {
+                    audioService!!.pause()
+                    fab!!.setImageDrawable(
+                        ContextCompat.getDrawable(
+                            context!!,
+                            R.drawable.play_button
+                        )
                     )
-                )
-
-
+                }
             }
-
         }
-        //context?.startService(intent);
-
-
-        val seekBarHint: TextView = textView
 
         mSeekBar = seekbar
-
         mSeekBar!!.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
             override fun onStartTrackingTouch(seekBar: SeekBar) {
-                seekBarHint.visibility = View.VISIBLE
             }
 
             override fun onProgressChanged(
@@ -115,51 +113,24 @@ class PlayerFragment : Fragment(), Runnable {
                 progress: Int,
                 fromTouch: Boolean
             ) {
-                seekBarHint.visibility = View.VISIBLE
-                val x = Math.ceil(progress / 1000f.toDouble()).toInt()
-                if (x < 10) seekBarHint.text = "0:0$x" else seekBarHint.text = "0:$x"
-                val percent = progress / seekBar.max.toDouble()
-                val offset = seekBar.thumbOffset
-                val seekWidth = seekBar.width
-                val `val` = Math.round(percent * (seekWidth - 2 * offset)).toInt()
-                val labelWidth = seekBarHint.width
-                seekBarHint.x = (offset + seekBar.x + `val` - Math.round(percent * offset)
-                        - Math.round(percent * labelWidth / 2))
-                if (progress > 0 && !audioService!!.isPlaying()) {
-                    clearMediaPlayer()
-                    fab!!.setImageDrawable(
-                        ContextCompat.getDrawable(
-                            context!!,
-                            R.drawable.exo_controls_play
-                        )
-                    )
-                    mSeekBar!!.setProgress(0)
+                Log.d(
+                    LOG_TAG,
+                    "Seekbar  - aud-pos = ${audioService?.getPosition()} aud-max = ${audioService?.getDuration()} seek-pos = $progress seek-max = ${seekBar.max}"
+                )
+                if (audioService?.getPosition() == audioService?.getDuration()) {
+                    seekBar.progress = 0
                 }
             }
 
             override fun onStopTrackingTouch(seekBar: SeekBar) {
-                if (audioService!!.isPlaying()) {
-                    audioService!!.seetTo(seekBar.progress)
-                }
+                audioService!!.seekTo(seekBar.progress)
             }
         })
-
-
     }
 
     override fun onStart() {
         super.onStart()
         context?.bindService(intent, sConn!!, BIND_AUTO_CREATE);
-
-
-    }
-
-    override fun onStop() {
-        super.onStop()
-        //if (!bound) return;
-        //context?.unbindService(sConn!!);
-        bound = false;
-
     }
 
     override fun onCreateView(
@@ -167,50 +138,8 @@ class PlayerFragment : Fragment(), Runnable {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-        return inflater.inflate(ru.job4j.musictracks.R.layout.fragment_player, container, false)
+        return inflater.inflate(R.layout.fragment_player, container, false)
     }
-
-    fun playSong(trackUrl: String) {
-        /*try {
-            if (viewModel.mediaPlayer != null && viewModel.mediaPlayer!!.isPlaying) {
-                viewModel.clearMediaPlayer()
-                mSeekBar!!.progress = 0
-                viewModel.wasPlaying = true
-                fab!!.setImageDrawable(
-                    ContextCompat.getDrawable(
-                        context!!,
-                        R.drawable.ic_media_play
-                    )
-                )
-            }
-            if (!viewModel.wasPlaying) {
-                if (viewModel.mediaPlayer == null) {
-                    viewModel.mediaPlayer = MediaPlayer()
-                }
-                fab!!.setImageDrawable(
-                    ContextCompat.getDrawable(
-                        context!!,
-                        R.drawable.ic_media_pause
-                    )
-                )
-
-                viewModel.mediaPlayer!!.setDataSource(trackUrl)
-
-
-                viewModel.mediaPlayer!!.prepare()
-                viewModel.mediaPlayer!!.setVolume(0.5f, 0.5f)
-                viewModel.mediaPlayer!!.isLooping = false
-                mSeekBar!!.max = viewModel.mediaPlayer!!.duration
-
-                viewModel.mediaPlayer!!.start()
-                Thread(this).start()
-            }
-            viewModel.wasPlaying = false
-        } catch (e: Exception) {
-            e.printStackTrace()
-        }*/
-    }
-
 
     companion object {
         fun of(
@@ -222,54 +151,13 @@ class PlayerFragment : Fragment(), Runnable {
                     TracksFragment.TRACK_NAME to trackName,
                     TracksFragment.TRACK_IMG to trackImg,
                     TracksFragment.ARTIST_NAME to artistName
-
                 )
             }
     }
 
-    override fun run() {
-        var currentPosition = audioService!!.getPosition()/1000
-        val total = audioService!!.getDuration()/1000
-
-
-        while (audioService!!.isPlaying() && currentPosition!! < total!!) {
-            currentPosition = try {
-                Thread.sleep(1000)
-                audioService!!.getPosition()/1000
-            } catch (e: InterruptedException) {
-                return
-            } catch (e: java.lang.Exception) {
-                return
-            }
-            mSeekBar!!.progress = currentPosition
-        }
-
-    }
-
-    override fun onDestroy() {
-        super.onDestroy()
-        clearMediaPlayer()
-    }
-
     override fun onPause() {
         super.onPause()
-        audioService!!.pause()
-    }
-
-    private fun clearMediaPlayer() {
-        /*if (viewModel.mediaPlayer != null) {
-            try {
-                viewModel.mediaPlayer!!.release()
-                //viewModel.mediaPlayer = null
-            } catch (e: java.lang.Exception) {
-                e.printStackTrace()
-            }
-        }*/
-
-
-        /*  mediaPlayer.stop()
-          mediaPlayer.release()
-          mediaPlayer = null!!*/
+        audioService!!.freeze()
     }
 
 }

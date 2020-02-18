@@ -17,7 +17,7 @@ import ru.job4j.musictracks.models.Track
 /**
  * @author Dmitry Kolganov (mailto:dmk78@inbox.ru)
  * @version $Id$
- * @since 05.02.2020
+ * @since 12.02.2020
  */
 
 class TracksAdapter(
@@ -57,22 +57,15 @@ class TracksAdapter(
 
         fun setup(track: Track, itemClick: (Track) -> Unit) {
             with(containerView) {
-                tracksTvTrackName.text =track.trackName
+                tracksTvTrackName.text = track.trackName
                 tracksTvArtistName.text = track.artistName
-
                 track.artworkUrl100?.let {
-
                     val context: Context = tracksIvLogo.getContext()
                     Picasso.with(context).load(track.artworkUrl100)
                         .into(tracksIvLogo)
                 }
-
                 setOnClickListener { itemClick.invoke(track) }
             }
         }
-
-
     }
-
-
 }

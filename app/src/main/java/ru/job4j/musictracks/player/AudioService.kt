@@ -7,66 +7,59 @@ import android.media.MediaPlayer
 import android.os.Binder
 import android.os.IBinder
 import android.util.Log
-import java.util.*
+import androidx.lifecycle.MutableLiveData
 
+/**
+ * @author Dmitry Kolganov (mailto:dmk78@inbox.ru)
+ * @version $Id$
+ * @since 12.02.2020
+ */
 
-class AudioService : Service() , MediaPlayer.OnPreparedListener{
+class AudioService : Service(), MediaPlayer.OnPreparedListener, Runnable {
     private var binder: MyBinder = MyBinder()
-    val LOG_TAG = "myLogs"
-    var mediaPlayer: MediaPlayer? = null
-    var timer: Timer? = null
-    var tTask: TimerTask? = null
-    var interval: Long = 1000
-    var trackUrl: String? = ""
+    private val LOG_TAG = "myLogs"
+    private var mediaPlayer: MediaPlayer? = null
+    private var trackUrl: String? = ""
+    var isPlaybackShouldContinuePlaying: Boolean = false
+    private var progressLiveData: MutableLiveData<Int> = MutableLiveData()
 
     override fun onCreate() {
         super.onCreate()
         Log.d(LOG_TAG, "MyService onCreate")
-        timer = Timer()
-        //schedule()
-
     }
 
-    fun schedule() {
-        tTask?.let { tTask!!.cancel() }
-        if (interval > 0) {
-            tTask = object : TimerTask() {
-                override fun run() {
-                    Log.d(LOG_TAG, "run")
-                }
-            }
-            timer?.schedule(tTask, 1000, interval)
+    fun isPlaying(): Boolean {
+        mediaPlayer?.let {
+            return mediaPlayer!!.isPlaying
         }
+        return false
     }
 
-    fun upInterval(gap: Long): Long {
-        interval = interval + gap
-        schedule()
-        return interval
+    fun getProgressLiveData(): MutableLiveData<Int> = progressLiveData
+
+    fun play() {
+        mediaPlayer?.start()
+        isPlaybackShouldContinuePlaying = true
+        Thread(this).start()
     }
 
-    fun isPlaying(): Boolean = mediaPlayer?.let { mediaPlayer?.isPlaying }!!
-
-    fun play() = mediaPlayer?.start()
-
-    fun pause() = mediaPlayer?.pause()
-
-    fun seetTo(position: Int){
-        mediaPlayer!!.seekTo(position)
+    fun pause() {
+        mediaPlayer?.pause()
+        isPlaybackShouldContinuePlaying = false
     }
 
-    fun getPosition():Int  = mediaPlayer!!.currentPosition
-
-    fun getDuration():Int  = mediaPlayer!!.duration
-
-
-
-    fun downInterval(gap: Long): Long {
-        interval = interval - gap
-        if (interval < 0) interval = 0
-        schedule()
-        return interval
+    fun freeze() {
+        mediaPlayer?.pause()
+        isPlaybackShouldContinuePlaying = true
     }
+
+    fun seekTo(position: Int) {
+        mediaPlayer!!.seekTo(position * 1000)
+    }
+
+    fun getPosition(): Int = mediaPlayer!!.currentPosition / 1000
+
+    fun getDuration(): Int = mediaPlayer!!.duration / 1000
 
     override fun onBind(arg0: Intent?): IBinder? {
         Log.d(LOG_TAG, "MyService onBind")
@@ -79,41 +72,18 @@ class AudioService : Service() , MediaPlayer.OnPreparedListener{
                 mediaPlayer = MediaPlayer()
                 mediaPlayer!!.setAudioStreamType(AudioManager.STREAM_MUSIC);
                 mediaPlayer!!.setDataSource(trackUrl)
-
                 mediaPlayer!!.prepareAsync()
             }
-
-
-           // mediaPlayer!!.start()
         }
-
-
-
         return binder
     }
 
     override fun onUnbind(intent: Intent?): Boolean {
         if (mediaPlayer!!.isPlaying) {
             mediaPlayer!!.pause()
-            //mediaPlayer.release()
+            mediaPlayer!!.release()
         }
         return super.onUnbind(intent)
-    }
-
-    override fun onStart(intent: Intent?, startId: Int) {
-        super.onStart(intent, startId)
-        Log.d(LOG_TAG, "MyService onStart")
-        /*val extras = intent!!.extras
-        if (extras == null) Log.d("Service", "null") else {
-            Log.d("Service", "not null")
-            trackUrl = extras["trackUrl"] as String?
-            mediaPlayer = MediaPlayer()
-            mediaPlayer.setDataSource(trackUrl)
-            mediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
-            mediaPlayer.prepare()
-            //mediaPlayer.start()
-        }*/
-
     }
 
     inner class MyBinder : Binder() {
@@ -121,11 +91,26 @@ class AudioService : Service() , MediaPlayer.OnPreparedListener{
             get() {
                 return this@AudioService
             }
-
     }
 
     override fun onPrepared(p0: MediaPlayer?) {
-
         Log.d(LOG_TAG, "MyService is ready")
+    }
+
+    override fun run() {
+        var currentPosition = mediaPlayer!!.currentPosition / 1000
+        val total = mediaPlayer!!.duration / 1000
+        while (mediaPlayer!!.isPlaying() && currentPosition < total) {
+            currentPosition = try {
+                Thread.sleep(500)
+                mediaPlayer!!.currentPosition / 1000
+            } catch (e: InterruptedException) {
+                return
+            } catch (e: java.lang.Exception) {
+                return
+            }
+            progressLiveData.postValue(currentPosition)
+            Log.d(LOG_TAG, "current position is $currentPosition")
+        }
     }
 }

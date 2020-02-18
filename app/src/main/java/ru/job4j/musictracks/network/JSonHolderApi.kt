@@ -9,7 +9,7 @@ import ru.job4j.musictracks.models.GetTracksResponse
 /**
  * @author Dmitry Kolganov (mailto:dmk78@inbox.ru)
  * @version $Id$
- * @since 01.12.2019
+ * @since 12.02.2020
  */
 interface JSonHolderApi {
     @GET("search")
