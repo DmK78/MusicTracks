@@ -80,7 +80,7 @@ class PlayerFragment : Fragment() {
         }
         playerTvArtistName.text = artistName
         playerTvTracktName.text = trackName
-        fab = button as FloatingActionButton?
+        fab = button
         fab!!.setOnClickListener {
             audioService?.let {
                 if (!audioService!!.isPlaying()) {

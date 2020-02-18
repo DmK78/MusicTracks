@@ -1,32 +1,34 @@
 [![Build Status](https://travis-ci.org/DmK78/MusicTracks.svg?branch=master)](https://travis-ci.org/DmK78/MusicTracks)
 
-# VKFriendsKt
+# MusicTracks
 
 
 # О приложении
-Приложение "Друзья ВКонтакте".
+Приложение "Музыкальные треки".
 
-Простое приложение друзья вконтакте. После авторизации выводит список друзей. По клику открывает подробную информацию о друге.
+Приложение загружает находит список треков с - Api https://itunes.apple.com/ (не менее 5 символов)
+и запускает аудио трек
 
 В этом проекте используется:
 
 Kotlin, Retrofit, RX Java, Dagger
 
 # About the application
-The VKontakte Friends application.
+The Music tracks application.
 
-A simple application VKontakte friends. After authorization displays a list of friends. By clicking opens detailed information about a friend.
+The application downloads finds a list of tracks from - Api https://itunes.apple.com/ (at least 5 characters)
+and starts the audio track
 
 This project uses:
 
 Kotlin, Retrofit, RX Java, Dagger
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/DmK78/VKFriendsKt/master/images/1.JPG">
+  <img src="https://raw.githubusercontent.com/DmK78/MusicTracks/master/images/1.JPG">
   </p>
 
   <p align="center">
-    <img src="https://raw.githubusercontent.com/DmK78/VKFriendsKt/master/images/2.JPG">
+    <img src="https://raw.githubusercontent.com/DmK78/MusicTracks/master/images/2.JPG">
     </p>
 
 
