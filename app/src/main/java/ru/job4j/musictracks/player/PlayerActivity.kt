@@ -2,6 +2,7 @@ package ru.job4j.musictracks.player
 
 import android.content.Context
 import android.content.Intent
+import android.os.Bundle
 import androidx.fragment.app.Fragment
 import ru.job4j.musictracks.BaseActivity
 import ru.job4j.musictracks.tracks.TracksFragment
@@ -14,6 +15,18 @@ class PlayerActivity : BaseActivity() {
                     intent.getStringExtra(TracksFragment.ARTIST_NAME))
 
 
+    }
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        /*intent = Intent(applicationContext, AudioService::class.java)
+        startService(intent)*/
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        /*intent = Intent(applicationContext, AudioService::class.java)
+        stopService(intent)*/
     }
 
     companion object {
