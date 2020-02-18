@@ -11,6 +11,7 @@ import android.os.IBinder
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
+import android.view.View.VISIBLE
 import android.view.ViewGroup
 import android.widget.SeekBar
 import androidx.core.content.ContextCompat
@@ -51,6 +52,11 @@ class PlayerFragment : Fragment() {
                 Log.d(LOG_TAG, "MainActivity onServiceConnected")
                 audioService = (binder as AudioService.MyBinder).service
                 bound = true
+                audioService!!.getIsPlayerReadyLiveData().observe(viewLifecycleOwner, Observer {
+                    if (it) {
+                        fab!!.visibility = VISIBLE
+                    }
+                })
                 audioService!!.getProgressLiveData().observe(viewLifecycleOwner, Observer {
                     seekbar.progress = it
                     if (mSeekBar?.progress != audioService?.getDuration()) {

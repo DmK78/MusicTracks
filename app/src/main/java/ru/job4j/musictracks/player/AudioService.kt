@@ -22,6 +22,7 @@ class AudioService : Service(), MediaPlayer.OnPreparedListener, Runnable {
     private var trackUrl: String? = ""
     var isPlaybackShouldContinuePlaying: Boolean = false
     private var progressLiveData: MutableLiveData<Int> = MutableLiveData()
+    private var isPlayerReadyLiveData: MutableLiveData<Boolean> = MutableLiveData()
 
     override fun onCreate() {
         super.onCreate()
@@ -36,6 +37,8 @@ class AudioService : Service(), MediaPlayer.OnPreparedListener, Runnable {
     }
 
     fun getProgressLiveData(): MutableLiveData<Int> = progressLiveData
+
+    fun getIsPlayerReadyLiveData(): MutableLiveData<Boolean> = isPlayerReadyLiveData
 
     fun play() {
         mediaPlayer?.start()
@@ -70,6 +73,7 @@ class AudioService : Service(), MediaPlayer.OnPreparedListener, Runnable {
             trackUrl = extras["trackUrl"] as String?
             if (mediaPlayer == null) {
                 mediaPlayer = MediaPlayer()
+                mediaPlayer!!.setOnPreparedListener(this)
                 mediaPlayer!!.setAudioStreamType(AudioManager.STREAM_MUSIC);
                 mediaPlayer!!.setDataSource(trackUrl)
                 mediaPlayer!!.prepareAsync()
@@ -95,6 +99,7 @@ class AudioService : Service(), MediaPlayer.OnPreparedListener, Runnable {
 
     override fun onPrepared(p0: MediaPlayer?) {
         Log.d(LOG_TAG, "MyService is ready")
+        isPlayerReadyLiveData.value = true
     }
 
     override fun run() {

@@ -108,6 +108,7 @@
                 android:layout_height="wrap_content"
                 android:layout_margin="16dp"
                 android:src="@android:drawable/ic_media_play"
+                android:visibility="invisible"
                 android:text="@string/play_sound" />
 
         </LinearLayout>
